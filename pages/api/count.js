@@ -4,7 +4,7 @@ const path = require("path");
 const dbPath = path.resolve("pages");
 // Подключаемся к базе данных SQLite
 const db = new sqlite3.Database(`${dbPath}\\api\\tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
-  if (err) {
+    if (err) {
     console.error("Ошибка при подключении к базе данных:", err.message);
   }
 });
