@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from 'react';
 import style from "../Home.module.css"
 import ListIcon from '@mui/icons-material/List';
-import { fetchCount  } from '@/pages/store/countSlice'
+import { fetchCount  } from '@/components/store/countSlice'
 
 
 import { useDispatch, useSelector } from 'react-redux';

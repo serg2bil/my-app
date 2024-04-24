@@ -8,7 +8,7 @@ import React, { useEffect } from "react";
 
 import dayjs from "dayjs";
 import FormDialog from "../dialog/openDialog";
-import { fetchCount  } from '@/pages/store/countSlice'
+import { fetchCount  } from '@/components/store/countSlice'
 
 import { useDispatch, useSelector } from 'react-redux';
 
