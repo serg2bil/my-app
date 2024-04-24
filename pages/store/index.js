@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
-import countReducer from './countSlice';
-import userReducer from './users'
+import countReducer from './countSlice.js';
+import userReducer from './users.js'
 
 export default configureStore({
   reducer: {
