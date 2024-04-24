@@ -1,7 +1,7 @@
 import sqlite3 from 'sqlite3';
-
+const path = `pages\\api\\database\\tasks.db`.replace('app.asar', 'app.asar.unpacked');
 // Подключаемся к базе данных SQLite
-const db = new sqlite3.Database('pages/api/database/tasks.db', sqlite3.OPEN_READWRITE , (err) => {
+const db = new sqlite3.Database(path, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
   if (err) {
     console.error("Ошибка при подключении к базе данных:", err.message);
   }
