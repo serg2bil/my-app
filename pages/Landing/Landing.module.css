@@ -1,0 +1,75 @@
+.main {
+  position: relative;
+
+  background-repeat: no-repeat, repeat;
+  width: 100vw;
+  height: 100vh;
+  padding: 3vw 4vw;
+  background-origin: border-box;
+  background-size: cover;
+  background-image: url("../../public/istockphoto-806870424-2048x2048.jpg");
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10%;
+  background-color: #fff9f9;
+  width: 45%;
+  position: relative;
+  margin-left: auto;
+  height: 100%;
+}
+
+.content > h1 {
+  font-family: "Oswald", sans-serif;
+  font-weight: 400;
+  font-size: 2vw;
+  margin-bottom: 1.5vw;
+}
+.content > p {
+  font-family: "Noto Sans", sans-serif;
+  font-weight: 400;
+  font-size: 1vw;
+  width: 22vw;
+  margin-bottom: 2vw;
+}
+
+
+.bottom {
+  width: auto;
+  margin-top: 2%;
+}
+.bottom > p {
+    
+  font-size: 0.8vw;
+  font-family: "Noto Sans", sans-serif;
+  font-weight: 400;
+}
+.bottom > p> a{
+    color: rgb(0, 102, 255);
+    outline: none;
+}
+.bottom > p> a:hover{
+    text-decoration: underline;
+}
+.title_singin{
+    position: relative; 
+    font-size: 2.5vw !important;
+    font-weight: 600 !important;
+    right: 33%;
+}
+.error{
+  color: #d32f2f;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.66;
+  letter-spacing: 0.03333em;
+  text-align: left;
+  margin-top: 3px;
+  margin-right: 14px;
+  margin-bottom: 0;
+  margin-left: 14px;
+}
