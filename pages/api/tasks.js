@@ -1,12 +1,10 @@
 import sqlite3 from 'sqlite3';
-const path = require("path");
-const dbPath = path.resolve("pages");
-// Подключаемся к базе данных SQLite
-const db = new sqlite3.Database(`${dbPath}\\api\\tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+
+  const db = new sqlite3.Database(`pages\\api\\tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
-    console.error("Ошибка при подключении к базе данных:", err.message);
-  }
-});
+      console.error("Ошибка при подключении к базе данных:", err.message);
+    }
+  });
 
 // Создаем таблицу задач при запуске сервера, если ее нет
 db.serialize(() => {
