@@ -1,12 +1,10 @@
 import sqlite3 from 'sqlite3';
-const path = require("path");
-const dbPath = path.resolve("pages");
-// Подключаемся к базе данных SQLite
-const db = new sqlite3.Database(`${dbPath}\\api\\tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
-  if (err) {
-    console.error("Ошибка при подключении к базе данных:", err.message);
-  }
-});
+
+  const db = new sqlite3.Database(`pages\\api\\tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+    if (err) {
+      console.error("Ошибка при подключении к базе данных:", err.message);
+    }
+  });
 
 db.serialize(() => {
     db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, first_name TEXT, last_name TEXT, email TEXT, password TEXT)");
