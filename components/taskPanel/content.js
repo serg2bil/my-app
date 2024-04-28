@@ -161,7 +161,7 @@ export default function Panel({ day , x}) {
         
         <div className={ day==='today' ? style.yesterday :  style.yesterday}>
           
-        {error &&  <h2>An error occured: {error}</h2>}
+        
           <FormDialog
             handleOpen={setOpen}
             open={open}

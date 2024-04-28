@@ -55,7 +55,7 @@ export default function Menu() {
 
     return (
         <div className={style.menu}>
-            {error &&  <h2>An error occured: {error}</h2>}
+            
             <div className={style.nav}>
                 <div className={style.top}>
                     <h1 className={style.title}>Menu</h1>

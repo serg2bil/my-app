@@ -15,18 +15,32 @@ db.serialize(() => {
   export default function handler(req, res) {
 
 
-    function addUser(req, res){
-      const data = req.body
-      db.run("INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)", [data.firstName, data.lastName, data.email, data.password], function(err) {
+    function addUser(req, res) {
+      const data = req.body;
+  
+      // Проверка существования пользователя
+      db.get("SELECT id FROM users WHERE email = ?", [data.email], function(err, row) {
         if (err) {
-          console.error("Error inserting data:", err.message);
+          console.error("Error querying database:", err.message);
           res.status(500).json({ error: "Internal Server Error" });
+        } else if (row) {
+          // Пользователь с такой электронной почтой уже существует
+          res.status(400).json({ error_m: "User with this email already exists" });
         } else {
-          const userId = this.lastID; 
-          res.status(200).json({ message: "Data inserted successfully", user_id: userId });
+          // Добавление нового пользователя
+          db.run("INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)", [data.firstName, data.lastName, data.email, data.password], function(err) {
+            if (err) {
+              console.error("Error inserting data:", err.message);
+              res.status(500).json({ error: "Internal Server Error" });
+            } else {
+              const userId = this.lastID; 
+              res.status(200).json({ message: "Data inserted successfully", user_id: userId });
+            }
+          });
         }
       });
     }
+  
 
 
 

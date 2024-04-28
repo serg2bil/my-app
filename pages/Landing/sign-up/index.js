@@ -24,7 +24,8 @@ export default function Home1() {
         lastName: "",
         email: "",
         password: "",
-        reEnteredPassword: ""
+        reEnteredPassword: "",
+        error:""
     });
 
 
@@ -48,6 +49,7 @@ export default function Home1() {
 
         } else {
             console.log(responseData.error);
+            setFormErrors({error:responseData.error_m})
         }
     }
 
@@ -160,7 +162,7 @@ export default function Home1() {
                 helperText={formErrors.email}
                 sx={{ m: 1, width: '80%' }}
             />
-
+            <p className={styles.error}>{formErrors.error}</p>
             <Grid
                 container
                 direction="row"
