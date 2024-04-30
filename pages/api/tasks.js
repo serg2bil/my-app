@@ -1,10 +1,21 @@
-const sqlite3 = require("sqlite3").verbose();
+// const sqlite3 = require("sqlite3").verbose();
 
-const db = new sqlite3.Database(`./db/tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
-  if (err) {
-      console.error("Ошибка при подключении к базе данных:", err.message);
-    }
-  });
+// const db = new sqlite3.Database(`./db/tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+//   if (err) {
+//       console.error("Ошибка при подключении к базе данных:", err.message);
+//     }
+//   });
+
+
+
+import { open } from "sqlite";
+
+import sqlite3 from "sqlite3";
+const db = await open({
+  filename: "./db/tasks.db",
+  driver: sqlite3.Database,
+});
+
 
 // Создаем таблицу задач при запуске сервера, если ее нет
 db.serialize(() => {

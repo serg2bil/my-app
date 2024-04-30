@@ -1,9 +1,19 @@
-const sqlite3 = require("sqlite3").verbose();
-const db = new sqlite3.Database(`./db/tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
-  if (err) {
-      console.error("Ошибка при подключении к базе данных:", err.message);
-    }
-  });
+import { open } from "sqlite";
+
+
+import sqlite3 from "sqlite3";
+const db = await open({
+  filename: "./db/tasks.db",
+  driver: sqlite3.Database,
+});
+
+
+
+// const db = new sqlite3.Database(`./db/tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+//   if (err) {
+//       console.error("Ошибка при подключении к базе данных:", err.message);
+//     }
+//   });
 
 db.serialize(() => {
     db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, first_name TEXT, last_name TEXT, email TEXT, password TEXT)");
