@@ -44,7 +44,7 @@ export default function Panel({ day , x}) {
     
 
     const tasks = data[calcDay(day).format('YYYY-MM-DD')];
-
+    console.log(tasks);
     useEffect(() => {
       updateData();
   }, []); 

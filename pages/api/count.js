@@ -1,15 +1,37 @@
-import { Client } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
-// Создаем подключение к базе данных
-const client = new Client({
+// Создаем пул подключений к базе данных
+const pool = createPool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },
 });
 
-// Подключаемся к базе данных
-await client.connect();
+// Функция для выполнения запросов к базе данных
+async function query(text, params) {
+  try {
+    const result = await pool.query(text, params);
+    return result.rows;
+  } catch (error) {
+    console.error("Error executing query:", error.message);
+    throw error;
+  }
+}
+
+// Функция для подсчета количества невыполненных задач для указанной даты и пользователя
+async function getIncompleteTasksCount(user_id, date) {
+  const queryText = 'SELECT COUNT(*) AS count FROM tasks WHERE user_id = $1 AND date = $2 AND is_done = false';
+  const result = await query(queryText, [user_id, date]);
+  return result[0];
+}
+
+// Функция для получения общего количества невыполненных задач для указанного пользователя
+async function getTotalIncompleteTasksCount(user_id) {
+  const queryText = 'SELECT COUNT(*) AS total_count FROM tasks WHERE user_id = $1 AND is_done = false';
+  const result = await query(queryText, [user_id]);
+  return result[0];
+}
 
 // Экспортируем функцию-обработчик
 export default async function handler(req, res) {
@@ -51,16 +73,4 @@ export default async function handler(req, res) {
     console.error("Internal Server Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
-}
-
-// Функция для получения количества невыполненных задач для указанной даты и пользователя
-async function getIncompleteTasksCount(user_id, date) {
-  const result = await client.query('SELECT COUNT(*) AS count FROM tasks WHERE user_id = $1 AND date = $2 AND is_done = false', [user_id, date]);
-  return result.rows[0];
-}
-
-// Функция для получения общего количества невыполненных задач для указанного пользователя
-async function getTotalIncompleteTasksCount(user_id) {
-  const result = await client.query('SELECT COUNT(*) AS total_count FROM tasks WHERE user_id = $1 AND is_done = false', [user_id]);
-  return result.rows[0];
 }
