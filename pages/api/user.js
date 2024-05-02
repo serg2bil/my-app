@@ -1,94 +1,89 @@
-import { Client } from '@vercel/postgres';
+import { createClient } from '@vercel/postgres';
 
-// Создаем подключение к базе данных
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+// Создайте пул клиентов для подключения к базе данных PostgreSQL
+const pool = createClient();
 
-// Подключаемся к базе данных
-await client.connect();
-
-// Создаем таблицу users, если она не существует
-await client.query(`
-  CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    first_name TEXT,
-    last_name TEXT,
-    email TEXT,
-    password TEXT
-  )
-`);
-
-// Функция для добавления нового пользователя
-async function addUser(data) {
-  try {
-    // Проверяем существование пользователя
-    const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [data.email]);
-    if (existingUser.rows.length > 0) {
-      return { error: "User with this email already exists" };
-    }
-
-    // Добавляем нового пользователя
-    const result = await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4) RETURNING id', [
-      data.firstName,
-      data.lastName,
-      data.email,
-      data.password,
-    ]);
-
-    const userId = result.rows[0].id;
-    return { message: "Data inserted successfully", user_id: userId };
-  } catch (error) {
-    console.error("Error inserting data:", error.message);
-    throw new Error("Internal Server Error");
-  }
-}
-
-// Функция для аутентификации пользователя
-async function getUser(email, password) {
-  try {
-    // Ищем пользователя по email
-    const result = await client.query('SELECT * FROM users WHERE email = $1', [email]);
-    const user = result.rows[0];
-
-    if (!user) {
-      return { login_message: "User not found" };
-    }
-
-    // Проверяем пароль
-    if (user.password === password) {
-      return { user_id: user.id };
-    } else {
-      return { login_message: "Incorrect password or email" };
-    }
-  } catch (error) {
-    console.error("Error querying data:", error.message);
-    throw new Error("Internal Server Error");
-  }
-}
-
-// Экспортируем функцию-обработчик
+// Оберните в try-catch для обработки возможных ошибок
 export default async function handler(req, res) {
-  try {
+    // Проверяем метод запроса
     switch (req.method) {
-      case 'POST':
-        if (req.query.q === 'login') {
-          const { email, password } = req.body;
-          const result = await getUser(email, password);
-          res.status(200).json(result);
-        } else {
-          const result = await addUser(req.body);
-          res.status(200).json(result);
-        }
-        break;
-      default:
-        res.status(405).json({ error: 'Method Not Allowed' });
+        case 'POST':
+            if (req.query.q === 'login') {
+                // Обработка запроса для входа пользователя
+                await loginUser(req, res);
+            } else {
+                // Обработка запроса для добавления нового пользователя
+                await addUser(req, res);
+            }
+            break;
     }
-  } catch (error) {
-    console.error("Internal Server Error:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+}
+
+async function addUser(req, res) {
+    const data = req.body;
+
+    try {
+        // Проверяем существует ли пользователь с такой же почтой
+        const existingUser = await getUserByEmail(data.email);
+
+        if (existingUser) {
+            res.status(400).json({ error: "User with this email already exists" });
+        } else {
+            // Добавляем нового пользователя
+            const newUser = await createUser(data);
+            res.status(200).json({ message: "User created successfully", user_id: newUser.id });
+        }
+    } catch (error) {
+        console.error("Error adding user:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+async function loginUser(req, res) {
+    const { email, password } = req.body;
+
+    try {
+        // Получаем пользователя по электронной почте
+        const user = await getUserByEmail(email);
+
+        if (!user) {
+            res.status(404).json({ error: "User not found" });
+        } else {
+            // Проверяем пароль
+            if (user.password === password) {
+                res.status(200).json({ user_id: user.id });
+            } else {
+                res.status(401).json({ error: "Incorrect password or email" });
+            }
+        }
+    } catch (error) {
+        console.error("Error logging in:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+async function getUserByEmail(email) {
+    try {
+        // Выполняем запрос к базе данных для получения пользователя по электронной почте
+        const result = await pool.sql`SELECT * FROM users WHERE email = ${email};`;
+        return result.rows[0]; // Возвращаем первого пользователя, если он найден
+    } catch (error) {
+        console.error("Error querying database:", error.message);
+        throw error;
+    }
+}
+
+async function createUser(userData) {
+    try {
+        // Выполняем запрос к базе данных для добавления нового пользователя
+        const result = await pool.sql`
+            INSERT INTO users (first_name, last_name, email, password)
+            VALUES (${userData.firstName}, ${userData.lastName}, ${userData.email}, ${userData.password})
+            RETURNING id;
+        `;
+        return result.rows[0]; // Возвращаем только что созданного пользователя
+    } catch (error) {
+        console.error("Error inserting data:", error.message);
+        throw error;
+    }
 }
