@@ -44,7 +44,8 @@ export default function Panel({ day , x}) {
     
 
     const tasks = data[calcDay(day).format('YYYY-MM-DD')];
-    console.log(tasks);
+
+    
     useEffect(() => {
       updateData();
   }, []); 
@@ -97,6 +98,7 @@ export default function Panel({ day , x}) {
       const data = await response.json();
       setData(data)
       console.log(data);
+      console.log(tasks);
     } catch (error) {
       console.error('Error updating data:', error);
     }
