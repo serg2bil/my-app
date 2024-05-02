@@ -1,7 +1,9 @@
-import { createClient } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
 // Создайте пул клиентов для подключения к базе данных PostgreSQL
-const pool = createClient();
+const pool = createPool({
+    connectionString: process.env.POSTGRES_URL // Укажите свою строку подключения
+});
 
 // Оберните в try-catch для обработки возможных ошибок
 export default async function handler(req, res) {
@@ -65,7 +67,7 @@ async function loginUser(req, res) {
 async function getUserByEmail(email) {
     try {
         // Выполняем запрос к базе данных для получения пользователя по электронной почте
-        const result = await pool.sql`SELECT * FROM users WHERE email = ${email};`;
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         return result.rows[0]; // Возвращаем первого пользователя, если он найден
     } catch (error) {
         console.error("Error querying database:", error.message);
@@ -76,11 +78,11 @@ async function getUserByEmail(email) {
 async function createUser(userData) {
     try {
         // Выполняем запрос к базе данных для добавления нового пользователя
-        const result = await pool.sql`
+        const result = await pool.query(`
             INSERT INTO users (first_name, last_name, email, password)
-            VALUES (${userData.firstName}, ${userData.lastName}, ${userData.email}, ${userData.password})
+            VALUES ($1, $2, $3, $4)
             RETURNING id;
-        `;
+        `, [userData.firstName, userData.lastName, userData.email, userData.password]);
         return result.rows[0]; // Возвращаем только что созданного пользователя
     } catch (error) {
         console.error("Error inserting data:", error.message);
