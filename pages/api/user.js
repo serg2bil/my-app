@@ -29,7 +29,7 @@ async function addUser(req, res) {
         const existingUser = await getUserByEmail(data.email);
 
         if (existingUser) {
-            res.status(400).json({ error: "User with this email already exists" });
+            res.status(400).json({ login_massage: "User with this email already exists" });
         } else {
             // Добавляем нового пользователя
             const newUser = await createUser(data);
