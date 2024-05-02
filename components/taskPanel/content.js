@@ -11,7 +11,6 @@ import FormDialog from "../dialog/openDialog";
 import { fetchCount  } from '@/components/store/countSlice'
 
 import { useDispatch, useSelector } from 'react-redux';
-import moment from "moment/moment";
 
 
 
@@ -44,12 +43,14 @@ export default function Panel({ day , x}) {
     formData.append('user_id',  user_id)
     
 
-    const tasks = data[calcDay(day)];
+    const tasks = data[calcDay(day).format('YYYY-MM-DD')];
 
     
     useEffect(() => {
       updateData();
   }, []); 
+
+
 
   async function sendData(url, method, data) {
     
@@ -97,10 +98,16 @@ export default function Panel({ day , x}) {
       }
   
       const data = await response.json();
-      setData(data)
+      const newData = {};
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          const newKey = dayjs(key).format("YYYY-MM-DD");
+          newData[newKey] = data[key];
+        }
+      }
+    
+      setData(newData);
       console.log(data);
-      console.log(tasks);
-      console.log(moment());
     } catch (error) {
       console.error('Error updating data:', error);
     }
