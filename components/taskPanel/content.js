@@ -99,7 +99,7 @@ export default function Panel({ day , x}) {
       setData(data)
       console.log(data);
       console.log(tasks);
-      console.log(calcDay(day));
+      console.log(dayjs());
     } catch (error) {
       console.error('Error updating data:', error);
     }
