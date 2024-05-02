@@ -1,45 +1,53 @@
-import { Client } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
-// Создаем подключение к базе данных
-const client = new Client({
+// Создаем пул подключений к базе данных
+const pool = createPool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },
 });
 
-// Подключаемся к базе данных
-await client.connect();
+// Функция для создания таблицы задач
+async function createTasksTable() {
+  try {
+    // Создаем таблицу задач, если ее нет
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        title TEXT,
+        is_done BOOLEAN DEFAULT FALSE,
+        date DATE
+      )
+    `);
+  } catch (error) {
+    console.error("Error creating tasks table:", error.message);
+    throw error;
+  }
+}
 
-// Создаем таблицу задач при запуске сервера, если ее нет
-await client.query(`
-  CREATE TABLE IF NOT EXISTS tasks (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER,
-    title TEXT,
-    is_done BOOLEAN DEFAULT FALSE,
-    date DATE
-  )
-`);
+// Вызываем функцию для создания таблицы задач
+createTasksTable();
 
 // Экспортируем функцию-обработчик
 export default async function handler(req, res) {
   try {
     switch (req.method) {
       case 'GET':
-        getTasks(req, res);
+        await getTasks(req, res);
         break;
       case 'POST':
-        addTask(req, res);
+        await addTask(req, res);
         break;
       case 'PUT':
-        updateTask(req, res);
+        await updateTask(req, res);
         break;
       case 'PATCH':
-        updateTaskStatus(req, res);
+        await updateTaskStatus(req, res);
         break;
       case 'DELETE':
-        deleteTask(req, res);
+        await deleteTask(req, res);
         break;
       default:
         console.log('Unsupported HTTP method');
@@ -54,7 +62,7 @@ export default async function handler(req, res) {
 async function getTasks(req, res) {
   try {
     const { user_id } = req.query;
-    const result = await client.query('SELECT id, title AS text, is_done AS done, date FROM tasks WHERE user_id = $1', [user_id]);
+    const result = await pool.query('SELECT id, title AS text, is_done AS done, date FROM tasks WHERE user_id = $1', [user_id]);
     const rows = result.rows;
 
     const data = {};
@@ -80,7 +88,7 @@ async function getTasks(req, res) {
 async function addTask(req, res) {
   try {
     const { text, date, user_id } = req.body;
-    await client.query('INSERT INTO tasks (user_id, title, is_done, date) VALUES ($1, $2, $3, $4)', [user_id, text, false, date]);
+    await pool.query('INSERT INTO tasks (user_id, title, is_done, date) VALUES ($1, $2, $3, $4)', [user_id, text, false, date]);
     res.status(200).json({ message: "Done" });
   } catch (error) {
     console.error("Error adding task:", error.message);
@@ -92,7 +100,7 @@ async function addTask(req, res) {
 async function updateTask(req, res) {
   try {
     const { id, text, date } = req.body;
-    const result = await client.query('UPDATE tasks SET title = $1, date = $2 WHERE id = $3', [text, date, id]);
+    const result = await pool.query('UPDATE tasks SET title = $1, date = $2 WHERE id = $3', [text, date, id]);
     if (result.rowCount === 0) {
       res.status(404).json({ error: "Task with specified ID not found" });
     } else {
@@ -108,7 +116,7 @@ async function updateTask(req, res) {
 async function updateTaskStatus(req, res) {
   try {
     const { id, checked } = req.body;
-    const result = await client.query('UPDATE tasks SET is_done = $1 WHERE id = $2', [checked, id]);
+    const result = await pool.query('UPDATE tasks SET is_done = $1 WHERE id = $2', [checked, id]);
     if (result.rowCount === 0) {
       res.status(404).json({ error: "Task with specified ID not found" });
     } else {
@@ -124,7 +132,7 @@ async function updateTaskStatus(req, res) {
 async function deleteTask(req, res) {
   try {
     const { id, user_id } = req.body;
-    const result = await client.query('DELETE FROM tasks WHERE id = $1 AND user_id = $2', [id, user_id]);
+    const result = await pool.query('DELETE FROM tasks WHERE id = $1 AND user_id = $2', [id, user_id]);
     if (result.rowCount === 0) {
       res.status(404).json({ error: "Task with specified ID not found" });
     } else {
