@@ -11,6 +11,7 @@ import FormDialog from "../dialog/openDialog";
 import { fetchCount  } from '@/components/store/countSlice'
 
 import { useDispatch, useSelector } from 'react-redux';
+import moment from "moment/moment";
 
 
 
@@ -99,7 +100,7 @@ export default function Panel({ day , x}) {
       setData(data)
       console.log(data);
       console.log(tasks);
-      console.log(dayjs());
+      console.log(moment());
     } catch (error) {
       console.error('Error updating data:', error);
     }
