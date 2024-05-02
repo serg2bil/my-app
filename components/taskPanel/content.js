@@ -43,7 +43,7 @@ export default function Panel({ day , x}) {
     formData.append('user_id',  user_id)
     
 
-    const tasks = data[calcDay(day).format('YYYY-MM-DD')];
+    const tasks = data[calcDay(day)];
 
     
     useEffect(() => {
