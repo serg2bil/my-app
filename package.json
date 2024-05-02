@@ -24,6 +24,7 @@
     "@nextui-org/system": "^2.1.2",
     "@nextui-org/theme": "^2.2.2",
     "@reduxjs/toolkit": "^2.2.3",
+    "@vercel/postgres": "^0.8.0",
     "dayjs": "^1.11.10",
     "framer-motion": "^11.1.7",
     "moment": "^2.30.1",

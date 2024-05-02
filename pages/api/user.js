@@ -1,127 +1,94 @@
-import { open } from "sqlite";
+import { Client } from '@vercel/postgres';
 
-
-import sqlite3 from "sqlite3";
-const db = await open({
-  filename: "./db/tasks.db",
-  driver: sqlite3.Database,
+// Создаем подключение к базе данных
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
+// Подключаемся к базе данных
+await client.connect();
 
+// Создаем таблицу users, если она не существует
+await client.query(`
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    email TEXT,
+    password TEXT
+  )
+`);
 
-// const db = new sqlite3.Database(`./db/tasks.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
-//   if (err) {
-//       console.error("Ошибка при подключении к базе данных:", err.message);
-//     }
-//   });
-
-db.serialize(() => {
-    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, first_name TEXT, last_name TEXT, email TEXT, password TEXT)");
-  });
-  
-
-
-  export default function handler(req, res) {
-
-
-    function addUser(req, res) {
-      const data = req.body;
-  
-      // Проверка существования пользователя
-      db.get("SELECT id FROM users WHERE email = ?", [data.email], function(err, row) {
-        if (err) {
-          console.error("Error querying database:", err.message);
-          res.status(500).json({ error: "Internal Server Error" });
-        } else if (row) {
-          // Пользователь с такой электронной почтой уже существует
-          res.status(400).json({ error_m: "User with this email already exists" });
-        } else {
-          // Добавление нового пользователя
-          db.run("INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)", [data.firstName, data.lastName, data.email, data.password], function(err) {
-            if (err) {
-              console.error("Error inserting data:", err.message);
-              res.status(500).json({ error: "Internal Server Error" });
-            } else {
-              const userId = this.lastID; 
-              res.status(200).json({ message: "Data inserted successfully", user_id: userId });
-            }
-          });
-        }
-      });
+// Функция для добавления нового пользователя
+async function addUser(data) {
+  try {
+    // Проверяем существование пользователя
+    const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [data.email]);
+    if (existingUser.rows.length > 0) {
+      return { error: "User with this email already exists" };
     }
-  
 
+    // Добавляем нового пользователя
+    const result = await client.query('INSERT INTO users (first_name, last_name, email, password) VALUES ($1, $2, $3, $4) RETURNING id', [
+      data.firstName,
+      data.lastName,
+      data.email,
+      data.password,
+    ]);
 
-
-
-
-
-
-
- function getUser(req, res) {
-  const { email, password } = req.body;
-  db.get("SELECT * FROM users WHERE email = ?", [email], (err, row) => {
-      if (err) {
-          console.error("Error querying data:", err.message);
-          res.status(500).json({ error: "Internal Server Error" });
-      } else {
-          if (!row) {
-            res.status(200).json({ login_massage: "User not found" });
-            
-          } else {
-              // Пользователь найден, проверяем пароль
-              if (row.password === password) {
-                res.status(200).json({ user_id: row.id });
-              } else {
-                res.status(200).json({ login_massage: "Incorrect password or email" });
-              }
-          }
-      }
-  });
+    const userId = result.rows[0].id;
+    return { message: "Data inserted successfully", user_id: userId };
+  } catch (error) {
+    console.error("Error inserting data:", error.message);
+    throw new Error("Internal Server Error");
+  }
 }
 
-// Функция для получения пользователя по электронной почте
-function getUserByEmail(email, callback) {
-  const query = "SELECT * FROM users WHERE email = ?";
-  db.get(query, [email], (err, row) => {
-      if (err) {
-          console.error("Ошибка при выполнении запроса:", err.message);
-          callback(err, null);
-      } else {
-          callback(null, row); // Возвращаем пользователя (или null, если пользователь не найден)
-      }
-  });
+// Функция для аутентификации пользователя
+async function getUser(email, password) {
+  try {
+    // Ищем пользователя по email
+    const result = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = result.rows[0];
+
+    if (!user) {
+      return { login_message: "User not found" };
+    }
+
+    // Проверяем пароль
+    if (user.password === password) {
+      return { user_id: user.id };
+    } else {
+      return { login_message: "Incorrect password or email" };
+    }
+  } catch (error) {
+    console.error("Error querying data:", error.message);
+    throw new Error("Internal Server Error");
+  }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Экспортируем функцию-обработчик
+export default async function handler(req, res) {
+  try {
     switch (req.method) {
-      
-
       case 'POST':
-        
-        if(req.query.q === 'login'){
-          
-          getUser(req, res);
-        }else{
-          addUser(req, res);
+        if (req.query.q === 'login') {
+          const { email, password } = req.body;
+          const result = await getUser(email, password);
+          res.status(200).json(result);
+        } else {
+          const result = await addUser(req.body);
+          res.status(200).json(result);
         }
-        
-       
         break;
+      default:
+        res.status(405).json({ error: 'Method Not Allowed' });
     }
+  } catch (error) {
+    console.error("Internal Server Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 }
